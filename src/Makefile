@@ -3,7 +3,7 @@ THE_OS := $(shell uname -s)
 default:
 	@echo "Detected OS: ${THE_OS}"
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -flto -march=native -std=c++14 -DNDEBUG'  \
+		CXXFLAGS='$(CXXFLAGS) --sysroot=/app/.apt -Wall -Wextra -pipe -O3 -g -ffast-math -flto -march=native -std=c++14 -DNDEBUG'  \
 		LDFLAGS='$(LDFLAGS) -flto -g' \
 		leelaz
 
