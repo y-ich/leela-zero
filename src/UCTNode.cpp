@@ -242,25 +242,30 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
     // Count parentvisits manually to avoid issues with transpositions.
     auto total_visited_policy = 0.0f;
     auto parentvisits = size_t{0};
+    auto max_policy = 0.0f;
     for (const auto& child : m_children) {
         if (child.valid()) {
             parentvisits += child.get_visits();
+            auto policy = child.get_policy();
+            if (max_policy < policy) {
+                max_policy = policy;
+            }
             if (child.get_visits() > 0) {
-                total_visited_policy += child.get_policy();
+                total_visited_policy += policy;
             }
         }
     }
 
     auto numerator = std::sqrt(double(parentvisits));
-    auto fpu_reduction = 0.0f;
+    auto c_fpu = 0.0f;
     // Lower the expected eval for moves that are likely not the best.
     // Do not do this if we have introduced noise at this node exactly
     // to explore more.
     if (!is_root || !cfg_noise) {
-        fpu_reduction = cfg_fpu_reduction * std::sqrt(total_visited_policy);
+        c_fpu = 0.064;
     }
     // Estimated eval for unknown nodes = original parent NN eval - reduction
-    auto fpu_eval = get_net_eval(color) - fpu_reduction;
+    auto node_eval = get_net_eval(color);
 
     auto best = static_cast<UCTNodePointer*>(nullptr);
     auto best_value = std::numeric_limits<double>::lowest();
@@ -270,7 +275,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             continue;
         }
 
-        auto winrate = fpu_eval;
+        auto fpu_reduction = tanh(c_fpu * log(max_policy / child.get_policy()));
+        auto winrate = node_eval - fpu_reduction;
         if (child.is_inflated() && child->m_expand_state.load() == ExpandState::EXPANDING) {
             // Someone else is expanding this node, never select it
             // if we can avoid so, because we'd block on it.
