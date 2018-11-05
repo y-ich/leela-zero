@@ -233,11 +233,12 @@ SearchResult UCTSearch::play_simulation(GameState & currstate,
             next->invalidate();
         } else {
             result = play_simulation(currstate, next);
+            result.inc_depth();
         }
     }
 
     if (result.valid()) {
-        node->update(result.eval());
+        node->update(result.eval(), result.depth());
     }
     node->virtual_loss_undo();
 

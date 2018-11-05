@@ -101,7 +101,7 @@ static_assert(MAX_BATCH == 1, "MAX_BATCH != 1 not implemented");
  */
 //#define USE_TUNER
 
-static constexpr auto PROGRAM_NAME = "Leela Zero";
+static constexpr auto PROGRAM_NAME = "Leela Depth";
 static constexpr auto PROGRAM_VERSION = "0.16";
 
 /*

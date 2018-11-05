@@ -63,6 +63,7 @@ public:
     bool active() const;
     int get_move() const;
     int get_visits() const;
+    int get_depths() const;
     float get_policy() const;
     void set_policy(float policy);
     float get_eval(int tomove) const;
@@ -70,7 +71,7 @@ public:
     float get_net_eval(int tomove) const;
     void virtual_loss();
     void virtual_loss_undo();
-    void update(float eval);
+    void update(float eval, int depth);
 
     // Defined in UCTNodeRoot.cpp, only to be called on m_root in UCTSearch
     void randomize_first_proportionally();
@@ -94,7 +95,9 @@ private:
                        std::vector<Network::PolicyVertexPair>& nodelist,
                        float min_psa_ratio);
     double get_blackevals() const;
+    double get_blackdepthevals() const;
     void accumulate_eval(float eval);
+    void accumulate_deptheval(float eval);
     void kill_superkos(const KoState& state);
     void dirichlet_noise(float epsilon, float alpha);
 
@@ -107,11 +110,13 @@ private:
     // UCT
     std::atomic<std::int16_t> m_virtual_loss{0};
     std::atomic<int> m_visits{0};
+    std::atomic<int> m_depths{0};
     // UCT eval
     float m_policy;
     // Original net eval for this node (not children).
     float m_net_eval{0.0f};
     std::atomic<double> m_blackevals{0.0};
+    std::atomic<double> m_blackdepthevals{0.0};
     std::atomic<Status> m_status{ACTIVE};
 
     // m_expand_state acts as the lock for m_children.

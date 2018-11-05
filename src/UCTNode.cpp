@@ -168,9 +168,11 @@ void UCTNode::virtual_loss_undo() {
     m_virtual_loss -= VIRTUAL_LOSS_COUNT;
 }
 
-void UCTNode::update(float eval) {
+void UCTNode::update(float eval, int depth) {
     m_visits++;
+    m_depths += depth;
     accumulate_eval(eval);
+    accumulate_deptheval(eval * depth);
 }
 
 bool UCTNode::has_children() const {
@@ -200,10 +202,16 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
+int UCTNode::get_depths() const {
+    return m_depths;
+}
+
 float UCTNode::get_raw_eval(int tomove, int virtual_loss) const {
-    auto visits = get_visits() + virtual_loss;
+    // auto visits = get_visits() + virtual_loss;
+    auto visits = get_depths() + virtual_loss;
     assert(visits > 0);
-    auto blackeval = get_blackevals();
+    // auto blackeval = get_blackevals();
+    auto blackeval = get_blackdepthevals();
     if (tomove == FastBoard::WHITE) {
         blackeval += static_cast<double>(virtual_loss);
     }
@@ -232,8 +240,16 @@ double UCTNode::get_blackevals() const {
     return m_blackevals;
 }
 
+double UCTNode::get_blackdepthevals() const {
+    return m_blackdepthevals;
+}
+
 void UCTNode::accumulate_eval(float eval) {
     atomic_add(m_blackevals, double(eval));
+}
+
+void UCTNode::accumulate_deptheval(float eval) {
+    atomic_add(m_blackdepthevals, double(eval));
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool is_root) {

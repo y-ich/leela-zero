@@ -39,6 +39,8 @@ public:
     SearchResult() = default;
     bool valid() const { return m_valid;  }
     float eval() const { return m_eval;  }
+    int depth() const { return m_depth; }
+    void inc_depth() { m_depth++; }
     static SearchResult from_eval(float eval) {
         return SearchResult(eval);
     }
@@ -56,6 +58,7 @@ private:
         : m_valid(true), m_eval(eval) {}
     bool m_valid{false};
     float m_eval{0.0f};
+    int m_depth{1};
 };
 
 namespace TimeManagement {
