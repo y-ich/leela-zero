@@ -314,9 +314,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
 
     const auto numerator = std::sqrt(double(parentvisits) *
             std::log(cfg_logpuct * double(parentvisits) + cfg_logconst));
-    const auto fpu_reduction = (is_root ? cfg_fpu_root_reduction : cfg_fpu_reduction) * std::sqrt(total_visited_policy);
-    // Estimated eval for unknown nodes = parent (not NN) eval - reduction
-    const auto fpu_eval = get_raw_eval(color) - fpu_reduction;
 
     auto best = static_cast<UCTNodePointer*>(nullptr);
     auto best_value = std::numeric_limits<double>::lowest();
@@ -326,12 +323,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             continue;
         }
 
-        auto winrate = fpu_eval;
-        if (child.is_inflated() && child->m_expand_state.load() == ExpandState::EXPANDING) {
-            // Someone else is expanding this node, never select it
-            // if we can avoid so, because we'd block on it.
-            winrate = -1.0f - fpu_reduction;
-        } else if (child.get_visits() > 0) {
+        auto winrate = 0.0;
+        if (child.get_visits() > 0) {
             winrate = child.get_eval(color);
         }
         const auto psa = child.get_policy();
