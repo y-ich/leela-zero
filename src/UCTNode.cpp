@@ -183,6 +183,7 @@ void UCTNode::link_nodelist(std::atomic<int>& nodecount,
     }
 
     m_min_psa_ratio_children = skipped_children ? min_psa_ratio : 0.0f;
+    m_child_max_policy = max_psa;
 }
 
 const std::vector<UCTNodePointer>& UCTNode::get_children() const {
@@ -326,7 +327,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             continue;
         }
 
-        auto winrate = fpu_eval;
+        const auto psa = child.get_policy();
+        auto winrate = get_net_eval(color) * psa / m_child_max_policy;
         if (child.is_inflated() && child->m_expand_state.load() == ExpandState::EXPANDING) {
             // Someone else is expanding this node, never select it
             // if we can avoid so, because we'd block on it.
@@ -334,7 +336,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         } else if (child.get_visits() > 0) {
             winrate = child.get_eval(color);
         }
-        const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
         const auto puct = cfg_puct * psa * (numerator / denom);
         const auto value = winrate + puct;
