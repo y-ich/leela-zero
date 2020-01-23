@@ -173,7 +173,9 @@ void UCTNode::link_nodelist(std::atomic<int>& nodecount,
     }
 
     auto skipped_children = false;
+    m_psa_sq_sum = 0.0;
     for (const auto& node : nodelist) {
+        m_psa_sq_sum += node.first * node.first;
         if (node.first < new_min_psa) {
             skipped_children = true;
         } else if (node.first < old_min_psa) {
@@ -183,7 +185,6 @@ void UCTNode::link_nodelist(std::atomic<int>& nodecount,
     }
 
     m_min_psa_ratio_children = skipped_children ? min_psa_ratio : 0.0f;
-    m_child_max_policy = max_psa;
 }
 
 const std::vector<UCTNodePointer>& UCTNode::get_children() const {
@@ -328,7 +329,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         }
 
         const auto psa = child.get_policy();
-        auto winrate = get_net_eval(color) * psa / m_child_max_policy;
+        auto winrate = get_net_eval(color) / m_psa_sq_sum * psa;
         if (child.is_inflated() && child->m_expand_state.load() == ExpandState::EXPANDING) {
             // Someone else is expanding this node, never select it
             // if we can avoid so, because we'd block on it.
